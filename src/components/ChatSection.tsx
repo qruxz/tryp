@@ -44,7 +44,6 @@ const ChatSection = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
-
   const chipsRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -123,7 +122,7 @@ const ChatSection = () => {
     if (isNearBottom()) scrollChatToBottom();
   }, [messages]);
 
-  // ✅ Suggestion filtering (English + Hinglish only)
+  // ✅ Suggestion filtering (strict English OR Hinglish)
   useEffect(() => {
     if (inputValue.trim().length === 0) {
       setFollowUpSuggestions([]);
@@ -131,22 +130,25 @@ const ChatSection = () => {
       return;
     }
 
-    const allQuestions = [...englishQuestions, ...hinglishQuestions];
+    const languageQuestions =
+      language === "en" ? englishQuestions : hinglishQuestions;
 
-    const filtered = allQuestions.filter((question) =>
-      question.toLowerCase().includes(inputValue.toLowerCase())
-    ).slice(0, 6);
+    const filtered = languageQuestions
+      .filter((question) =>
+        question.toLowerCase().includes(inputValue.toLowerCase())
+      )
+      .slice(0, 6);
 
     setFollowUpSuggestions(filtered);
     setShowSuggestions(filtered.length > 0);
     setSelectedSuggestionIndex(-1);
-  }, [inputValue]);
+  }, [inputValue, language]);
 
-  // Predefined chips (mix of English + Hinglish)
-  const predefinedQuestions = [
-    ...englishQuestions.slice(0, 4),
-    ...hinglishQuestions.slice(0, 3)
-  ].slice(0, 10);
+  // ✅ Predefined chips (strict English OR Hinglish)
+  const predefinedQuestions =
+    language === "en"
+      ? englishQuestions.slice(0, 6)
+      : hinglishQuestions.slice(0, 6);
 
   // Server check
   useEffect(() => {
@@ -264,8 +266,8 @@ const ChatSection = () => {
                 </h2>
                 <p className="text-xs sm:text-sm font-poppins">
                   {language === "en"
-                    ? "Ask about Navyakosh (English or Hinglish)"
-                    : "Navyakosh ke baare mein puchho (English ya Hinglish)"}
+                    ? "Ask about Navyakosh (English only)"
+                    : "Navyakosh ke baare mein puchho (Hinglish only)"}
                 </p>
               </div>
             </div>
@@ -365,7 +367,7 @@ const ChatSection = () => {
                 onKeyPress={handleKeyPress}
                 placeholder={
                   language === "en"
-                    ? "Type in English or Hinglish..."
+                    ? "Type in English..."
                     : "Type in Hinglish..."
                 }
                 className="flex-1 bg-white rounded-xl font-poppins"
@@ -400,7 +402,7 @@ const ChatSection = () => {
                 className="text-xs sm:text-sm font-montserrat"
                 style={{ color: LCB_GREEN_DARK }}
               >
-                Try asking (English/Hinglish examples):
+                Try asking ({language === "en" ? "English" : "Hinglish"} examples):
               </p>
 
               <div className="relative">
@@ -434,13 +436,7 @@ const ChatSection = () => {
                         color: LCB_GREEN_DARK,
                         background: "white",
                       }}
-                      title={`${
-                        /\b(aap|kya|hai|kaise|nahi|haan)\b/.test(
-                          question.toLowerCase()
-                        )
-                          ? "Hinglish"
-                          : "English"
-                      }`}
+                      title={language === "en" ? "English" : "Hinglish"}
                     >
                       {question}
                     </button>
