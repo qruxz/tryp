@@ -241,11 +241,11 @@ const ChatSection = () => {
   };
 
   return (
-    <section className="px-4 sm:px-6 pb-12 font-poppins">
-      <div className="max-w-5xl mx-auto">
-        <div
-          className="bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col h-[80vh] border-2"
-          style={{ borderColor: LCB_GREEN }}
+  <section className="px-0 sm:px-6 pb-0 sm:pb-12 font-poppins h-screen sm:h-auto">
+  <div className="max-w-5xl mx-auto h-full sm:h-auto">
+    <div
+      className="bg-white rounded-none sm:rounded-3xl shadow-xl overflow-hidden flex flex-col h-full sm:h-[80vh] border-0 sm:border-2"
+      style={{ borderColor: LCB_GREEN }}
         >
           {/* Header */}
           <div
