@@ -336,7 +336,7 @@ const ChatSection = () => {
                     : "bg-transparent text-white hover:bg-white hover:bg-opacity-10"
                 }`}
               >
-                EN+HI
+                EN+
               </button>
               <button
                 onClick={() => setLanguage("hindi")}
