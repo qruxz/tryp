@@ -278,7 +278,7 @@ const ChatSection = () => {
   const getLoadingText = () => {
     switch (language) {
       case "english": return "Typing...";
-      case "hinglish": return "Typing ho raha hai...";
+      case "hinglish": return "Typing...";
       case "hindi": return "टाइप हो रहा है...";
       default: return "Typing...";
     }
