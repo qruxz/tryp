@@ -31,8 +31,8 @@ const ChatSection = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isServerOnline, setIsServerOnline] = useState(true);
 
-  // Language state: English or Hinglish
-  const [language, setLanguage] = useState<"en" | "hinglish">("en");
+  // Language state: english, hinglish, or hindi
+  const [language, setLanguage] = useState<"english" | "hinglish" | "hindi">("english");
 
   // Follow-up suggestions
   const [followUpSuggestions, setFollowUpSuggestions] = useState<string[]>([]);
@@ -48,7 +48,7 @@ const ChatSection = () => {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
-  // English questions
+  // English questions (for both english and hinglish modes)
   const englishQuestions = [
     "What is Navyakosh Organic Fertilizer?",
     "What are the benefits of using Navyakosh?",
@@ -62,7 +62,7 @@ const ChatSection = () => {
     "Does it work in all soil types?"
   ];
 
-  // Hinglish questions
+  // Hinglish questions (for hinglish mode)
   const hinglishQuestions = [
     "Navyakosh organic fertilizer kya hai?",
     "Navyakosh use karne ke kya benefits hain?",
@@ -74,6 +74,20 @@ const ChatSection = () => {
     "Kitni quantity use karni chahiye?",
     "Kab apply karna sahi hai?",
     "Kya yeh sabhi soil types mein kaam karta hai?"
+  ];
+
+  // Hindi questions (Devanagari script)
+  const hindiQuestions = [
+    "नव्याकोष जैविक उर्वरक क्या है?",
+    "नव्याकोष का उपयोग करने के क्या फायदे हैं?",
+    "गेहूं, मक्का और धान के लिए इसे कैसे लगाएं?",
+    "क्या यह दीर्घकालिक मिट्टी के स्वास्थ्य के लिए सुरक्षित है?",
+    "क्या यह रासायनिक उर्वरकों को बदल सकता है?",
+    "यह फसल की पैदावार कैसे बेहतर बनाता है?",
+    "नव्याकोष कहां मिलेगा?",
+    "कितनी मात्रा में उपयोग करना चाहिए?",
+    "कब लगाना सही है?",
+    "क्या यह सभी प्रकार की मिट्टी में काम करता है?"
   ];
 
   const isNearBottom = (): boolean => {
@@ -97,6 +111,16 @@ const ChatSection = () => {
     if (isNearBottom()) scrollChatToBottom();
   }, [messages]);
 
+  // Get current questions based on language mode
+  const getCurrentQuestions = () => {
+    switch (language) {
+      case "english": return englishQuestions;
+      case "hinglish": return [...englishQuestions, ...hinglishQuestions]; // Both English and Hinglish
+      case "hindi": return hindiQuestions;
+      default: return englishQuestions;
+    }
+  };
+
   // Filter suggestions based on input
   useEffect(() => {
     if (inputValue.trim().length === 0) {
@@ -105,7 +129,7 @@ const ChatSection = () => {
       return;
     }
 
-    const currentQuestions = language === "en" ? englishQuestions : hinglishQuestions;
+    const currentQuestions = getCurrentQuestions();
     const filtered = currentQuestions
       .filter((question) =>
         question.toLowerCase().includes(inputValue.toLowerCase())
@@ -147,7 +171,7 @@ const ChatSection = () => {
     handleSendMessage(suggestion);
   };
 
-  const predefinedQuestions = language === "en" ? englishQuestions.slice(0, 10) : hinglishQuestions.slice(0, 10);
+  const predefinedQuestions = getCurrentQuestions().slice(0, 10);
 
   // Server health check
   useEffect(() => {
@@ -183,6 +207,16 @@ const ChatSection = () => {
     el.scrollBy({ left: dir === "left" ? -amount : amount, behavior: "smooth" });
   };
 
+  // Get language code for API
+  const getLanguageForAPI = () => {
+    switch (language) {
+      case "english": return "en";
+      case "hinglish": return "hinglish";
+      case "hindi": return "hi";
+      default: return "en";
+    }
+  };
+
   const handleSendMessage = async (messageText: string) => {
     if (!messageText.trim()) return;
     if (!isServerOnline) {
@@ -203,7 +237,7 @@ const ChatSection = () => {
     requestAnimationFrame(scrollChatToBottom);
 
     try {
-      const response = await sendMessage(messageText, language);
+      const response = await sendMessage(messageText, getLanguageForAPI());
       if (response.success) {
         const aiMessage: Message = {
           id: (Date.now() + 1).toString(),
@@ -230,6 +264,46 @@ const ChatSection = () => {
     }
   };
 
+  // Get placeholder text based on language
+  const getPlaceholder = () => {
+    switch (language) {
+      case "english": return "Type your question...";
+      case "hinglish": return "Type your question (English ya Hinglish mein)...";
+      case "hindi": return "अपना प्रश्न लिखें...";
+      default: return "Type your question...";
+    }
+  };
+
+  // Get loading text based on language
+  const getLoadingText = () => {
+    switch (language) {
+      case "english": return "Typing...";
+      case "hinglish": return "Typing ho raha hai...";
+      case "hindi": return "टाइप हो रहा है...";
+      default: return "Typing...";
+    }
+  };
+
+  // Get "Try asking" text based on language
+  const getTryAskingText = () => {
+    switch (language) {
+      case "english": return "Try asking:";
+      case "hinglish": return "Try asking (English/Hinglish):";
+      case "hindi": return "पूछने की कोशिश करो:";
+      default: return "Try asking:";
+    }
+  };
+
+  // Get header subtitle based on language
+  const getHeaderSubtitle = () => {
+    switch (language) {
+      case "english": return "Ask about Navyakosh";
+      case "hinglish": return "Ask about Navyakosh (English/Hinglish)";
+      case "hindi": return "नव्याकोष के बारे में पूछें";
+      default: return "Ask about Navyakosh";
+    }
+  };
+
   return (
     <section className="px-4 sm:px-6 pb-12 font-poppins">
       <div className="max-w-5xl mx-auto">
@@ -247,23 +321,41 @@ const ChatSection = () => {
               </div>
               <div>
                 <h2 className="text-lg sm:text-2xl font-montserrat font-bold">LCB ChatBot 🌱</h2>
-                <p className="text-xs sm:text-sm font-poppins">{language === "en" ? "Ask about Navyakosh" : "Ask about Navyakosh in Hinglish"}</p>
+                <p className="text-xs sm:text-sm font-poppins">{getHeaderSubtitle()}</p>
               </div>
             </div>
 
-            {/* Language Toggle */}
-            <div className="flex items-center gap-2 text-sm">
+            {/* Language Toggle - Updated with 3 options */}
+            <div className="flex items-center gap-1 text-xs sm:text-sm bg-white bg-opacity-20 rounded-full p-1">
               <button
-                onClick={() => setLanguage("en")}
-                className={`px-2 py-1 rounded ${language === "en" ? "bg-white text-green-700 font-bold" : "bg-transparent text-white"}`}
+                onClick={() => setLanguage("english")}
+                className={`px-2 sm:px-3 py-1 rounded-full transition-all ${
+                  language === "english" 
+                    ? "bg-white text-green-700 font-bold shadow-sm" 
+                    : "bg-transparent text-white hover:bg-white hover:bg-opacity-10"
+                }`}
               >
                 EN
               </button>
               <button
                 onClick={() => setLanguage("hinglish")}
-                className={`px-2 py-1 rounded ${language === "hinglish" ? "bg-white text-green-700 font-bold" : "bg-transparent text-white"}`}
+                className={`px-2 sm:px-3 py-1 rounded-full transition-all ${
+                  language === "hinglish" 
+                    ? "bg-white text-green-700 font-bold shadow-sm" 
+                    : "bg-transparent text-white hover:bg-white hover:bg-opacity-10"
+                }`}
               >
-                HI-EN
+                EN+HI
+              </button>
+              <button
+                onClick={() => setLanguage("hindi")}
+                className={`px-2 sm:px-3 py-1 rounded-full transition-all ${
+                  language === "hindi" 
+                    ? "bg-white text-green-700 font-bold shadow-sm" 
+                    : "bg-transparent text-white hover:bg-white hover:bg-opacity-10"
+                }`}
+              >
+                हिं
               </button>
             </div>
           </div>
@@ -276,7 +368,7 @@ const ChatSection = () => {
             {isLoading && (
               <div className="flex justify-start">
                 <div className="rounded-2xl px-4 py-2 max-w-xs font-poppins" style={{ backgroundColor: LCB_GREEN_SOFT, color: LCB_GREEN_DARK }}>
-                  {language === "en" ? "Typing..." : "Typing ho raha hai..."}
+                  {getLoadingText()}
                 </div>
               </div>
             )}
@@ -308,7 +400,7 @@ const ChatSection = () => {
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
                 onKeyDown={handleKeyDown}
-                placeholder={language === "en" ? "Type your question..." : "Apna question type karo..."}
+                placeholder={getPlaceholder()}
                 className="flex-1 bg-white rounded-xl font-poppins"
                 style={{ borderColor: LCB_GREEN, color: "#166534" }}
                 disabled={isLoading || !isServerOnline}
@@ -326,26 +418,73 @@ const ChatSection = () => {
               </Button>
             </div>
 
-            {/* Chips */}
+            {/* Chips with improved arrow positioning */}
             <div className="space-y-2">
               <p className="text-xs sm:text-sm font-montserrat" style={{ color: LCB_GREEN_DARK }}>
-                {language === "en" ? "Try asking:" : "Poochne ki koshish karo:"}
+                {getTryAskingText()}
               </p>
               <div className="relative">
-                <button aria-label="Scroll left" onClick={() => scrollChips("left")} disabled={!canScrollLeft} className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 rounded-full p-2 shadow ${canScrollLeft ? "opacity-100" : "opacity-40 cursor-not-allowed"} hidden sm:flex`} style={{ backgroundColor: LCB_GREEN, color: "white" }}>
-                  <ChevronLeft size={18} />
+                {/* Left Arrow - positioned with more spacing */}
+                <button 
+                  aria-label="Scroll left" 
+                  onClick={() => scrollChips("left")} 
+                  disabled={!canScrollLeft} 
+                  className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 rounded-full p-2 shadow-md transition-all ${
+                    canScrollLeft ? "opacity-100 hover:scale-105" : "opacity-30 cursor-not-allowed"
+                  } hidden sm:flex`} 
+                  style={{ 
+                    backgroundColor: LCB_GREEN, 
+                    color: "white",
+                    marginLeft: "-12px" // Move slightly outside to prevent overlay
+                  }}
+                >
+                  <ChevronLeft size={16} />
                 </button>
 
-                <div ref={chipsRef} onScroll={updateChipsScrollState} className="flex gap-2 overflow-x-auto snap-x snap-mandatory pr-2 pl-2 sm:pl-8 sm:pr-8 items-stretch">
+                {/* Chips container with proper padding */}
+                <div 
+                  ref={chipsRef} 
+                  onScroll={updateChipsScrollState} 
+                  className="flex gap-2 overflow-x-auto snap-x snap-mandatory items-stretch py-1 px-1 sm:px-10" // Increased horizontal padding
+                  style={{ 
+                    scrollbarWidth: 'none', 
+                    msOverflowStyle: 'none',
+                 
+                  }}
+                >
                   {predefinedQuestions.map((question, index) => (
-                    <button key={index} onClick={() => handleSendMessage(question)} disabled={isLoading || !isServerOnline} className="shrink-0 snap-start rounded-full text-xs sm:text-sm px-3 sm:px-4 py-2 border transition-all hover:shadow" style={{ borderColor: LCB_GREEN, color: LCB_GREEN_DARK, background: "white" }}>
+                    <button 
+                      key={index} 
+                      onClick={() => handleSendMessage(question)} 
+                      disabled={isLoading || !isServerOnline} 
+                      className="shrink-0 snap-start rounded-full text-xs sm:text-sm px-3 sm:px-4 py-2 border transition-all hover:shadow-md hover:scale-[1.02] active:scale-95" 
+                      style={{ 
+                        borderColor: LCB_GREEN, 
+                        color: LCB_GREEN_DARK, 
+                        background: "white",
+                        whiteSpace: "nowrap"
+                      }}
+                    >
                       {question}
                     </button>
                   ))}
                 </div>
 
-                <button aria-label="Scroll right" onClick={() => scrollChips("right")} disabled={!canScrollRight} className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 rounded-full p-2 shadow ${canScrollRight ? "opacity-100" : "opacity-40 cursor-not-allowed"} hidden sm:flex`} style={{ backgroundColor: LCB_GREEN, color: "white" }}>
-                  <ChevronRight size={18} />
+                {/* Right Arrow - positioned with more spacing */}
+                <button 
+                  aria-label="Scroll right" 
+                  onClick={() => scrollChips("right")} 
+                  disabled={!canScrollRight} 
+                  className={`absolute right-0 top-1/2 -translate-y-1/2 z-20 rounded-full p-2 shadow-md transition-all ${
+                    canScrollRight ? "opacity-100 hover:scale-105" : "opacity-30 cursor-not-allowed"
+                  } hidden sm:flex`} 
+                  style={{ 
+                    backgroundColor: LCB_GREEN, 
+                    color: "white",
+                    marginRight: "-12px" // Move slightly outside to prevent overlay
+                  }}
+                >
+                  <ChevronRight size={16} />
                 </button>
               </div>
             </div>
