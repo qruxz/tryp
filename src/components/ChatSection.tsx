@@ -298,7 +298,7 @@ const ChatSection = () => {
   const getHeaderSubtitle = () => {
     switch (language) {
       case "english": return "Ask about Navyakosh";
-      case "hinglish": return "Ask about Navyakosh (English/Hinglish)";
+      case "hinglish": return "Ask about Navyakosh";
       case "hindi": return "नव्याकोष के बारे में पूछें";
       default: return "Ask about Navyakosh";
     }
