@@ -327,16 +327,7 @@ const ChatSection = () => {
 
             {/* Language Toggle - Updated with 3 options */}
             <div className="flex items-center gap-1 text-xs sm:text-sm bg-white bg-opacity-20 rounded-full p-1">
-              <button
-                onClick={() => setLanguage("english")}
-                className={`px-2 sm:px-3 py-1 rounded-full transition-all ${
-                  language === "english" 
-                    ? "bg-white text-green-700 font-bold shadow-sm" 
-                    : "bg-transparent text-white hover:bg-white hover:bg-opacity-10"
-                }`}
-              >
-                EN
-              </button>
+             
               <button
                 onClick={() => setLanguage("hinglish")}
                 className={`px-2 sm:px-3 py-1 rounded-full transition-all ${
