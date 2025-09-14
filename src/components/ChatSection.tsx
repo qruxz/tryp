@@ -1,22 +1,10 @@
-"use client";
+"use client";  
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  ArrowRight,
-  ChevronLeft,
-  ChevronRight,
-  AlertCircle,
-  CheckCircle,
-} from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import MessageBubble from "./MessageBubble";
-import {
-  sendMessage,
-  checkHealth,
-  testCORS,
-  detectInputLanguage,
-  getSmartPlaceholder,
-} from "@/utils/api";
+import { sendMessage, checkHealth } from "@/utils/api";
 import { toast } from "sonner";
 
 interface Message {
@@ -24,11 +12,10 @@ interface Message {
   text: string;
   isUser: boolean;
   timestamp: Date;
-  language?: string;
 }
 
 const LCB_GREEN = "rgb(148,191,115)";
-const LCB_GREEN_DARK = "rgb(148,191,115)";
+const LCB_GREEN_DARK = "rgb(118,161,85)";
 const LCB_GREEN_SOFT = "#EAF8EE";
 
 const ChatSection = () => {
@@ -44,15 +31,10 @@ const ChatSection = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isServerOnline, setIsServerOnline] = useState(true);
 
-  // Only English / Hindi toggle
+  // Language state: "en" for English, "hi" for Hindi (Hinglish auto-detected)
   const [language, setLanguage] = useState<"en" | "hi">("en");
 
-  // Smart detection: en / hi / hinglish
-  const [detectedInputLanguage, setDetectedInputLanguage] = useState<
-    "en" | "hi" | "hinglish"
-  >("en");
-
-  // Suggestions
+  // Follow-up suggestions state
   const [followUpSuggestions, setFollowUpSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
@@ -62,11 +44,12 @@ const ChatSection = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+
   const chipsRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
-  // Predefined FAQs
+  // English follow-up questions
   const englishQuestions = [
     "What is Navyakosh Organic Fertilizer?",
     "What are the benefits of using Navyakosh?",
@@ -74,39 +57,60 @@ const ChatSection = () => {
     "Is it safe for long-term soil health?",
     "Can it replace chemical fertilizers?",
     "How does it improve crop yield?",
+    "What kind of results can I expect?",
+    "On which crops can it be used?",
     "Where can I buy Navyakosh?",
+    "How does it reduce irrigation?",
+    "What is the cost of Navyakosh?",
     "How much quantity should I use?",
     "When should I apply the fertilizer?",
-    "Does it work in all soil types?",
+    "What are the soil requirements?",
+    "How long does it take to show results?",
+    "Is it suitable for organic farming?",
+    "What is the shelf life?",
+    "How to store Navyakosh properly?",
+    "Can it be mixed with other fertilizers?",
+    "What are the main ingredients?",
+    "How does weather affect application?",
+    "What crops benefit most from Navyakosh?",
+    "How often should I apply it?",
+    "What is the application method for different crops?",
+    "Does it work in all soil types?"
   ];
 
+  // Hindi follow-up questions
   const hindiQuestions = [
-    "नव्याकोष जैविक उर्वरक क्या है?",
-    "नव्याकोष का उपयोग करने के क्या फायदे हैं?",
+    "नव्याकोश जैविक उर्वरक क्या है?",
+    "नव्याकोश उपयोग करने के क्या फायदे हैं?",
     "गेहूं, मक्का और धान के लिए इसे कैसे लगाएं?",
-    "क्या यह दीर्घकालिक मिट्टी के स्वास्थ्य के लिए सुरक्षित है?",
-    "क्या यह रासायनिक उर्वरकों को बदल सकता है?",
-    "यह फसल की पैदावार कैसे बेहतर बनाता है?",
-    "नव्याकोष कहां मिलेगा?",
+    "क्या यह मिट्टी के स्वास्थ्य के लिए सुरक्षित है?",
+    "क्या यह रासायनिक उर्वरकों की जगह ले सकता है?",
+    "यह फसल की पैदावार कैसे बढ़ाता है?",
+    "मुझे किस प्रकार के परिणामों की उम्मीद करनी चाहिए?",
+    "यह किन फसलों पर इस्तेमाल हो सकता है?",
+    "नव्याकोश कहाँ से खरीद सकते हैं?",
+    "यह सिंचाई कैसे कम करता है?",
+    "नव्याकोश की कीमत क्या है?",
     "कितनी मात्रा में उपयोग करना चाहिए?",
-    "कब लगाना सही है?",
-    "क्या यह सभी प्रकार की मिट्टी में काम करता है?",
+    "उर्वरक कब लगाना चाहिए?",
+    "मिट्टी की क्या आवश्यकताएं हैं?",
+    "परिणाम दिखने में कितना समय लगता है?",
+    "क्या यह जैविक खेती के लिए उपयुक्त है?",
+    "इसकी शेल्फ लाइफ कितनी है?",
+    "नव्याकोश को सही तरीके से कैसे स्टोर करें?",
+    "क्या इसे अन्य उर्वरकों के साथ मिलाया जा सकता है?",
+    "मुख्य सामग्री क्या हैं?",
+    "मौसम लगाने को कैसे प्रभावित करता है?",
+    "कौन सी फसलों को नव्याकोश से सबसे ज्यादा फायदा होता है?",
+    "कितनी बार लगाना चाहिए?",
+    "विभिन्न फसलों के लिए लगाने का तरीका क्या है?",
+    "क्या यह सभी प्रकार की मिट्टी में काम करता है?"
   ];
-
-  // Detect input dynamically
-  useEffect(() => {
-    if (inputValue.trim()) {
-      const detected = detectInputLanguage(inputValue);
-      setDetectedInputLanguage(detected);
-    } else {
-      setDetectedInputLanguage(language);
-    }
-  }, [inputValue, language]);
 
   const isNearBottom = (): boolean => {
     const el = scrollContainerRef.current;
     if (!el) return true;
-    const threshold = 80;
+    const threshold = 100;
     return el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
   };
 
@@ -124,11 +128,7 @@ const ChatSection = () => {
     if (isNearBottom()) scrollChatToBottom();
   }, [messages]);
 
-  const getCurrentQuestions = () => {
-    return language === "hi" ? hindiQuestions : englishQuestions;
-  };
-
-  // Filter suggestions
+  // Filter suggestions based on input
   useEffect(() => {
     if (inputValue.trim().length === 0) {
       setFollowUpSuggestions([]);
@@ -136,76 +136,100 @@ const ChatSection = () => {
       return;
     }
 
-    const currentQuestions = getCurrentQuestions();
-    const filtered = currentQuestions
-      .filter((q) => q.toLowerCase().includes(inputValue.toLowerCase()))
-      .slice(0, 5);
+    const currentQuestions = language === "en" ? englishQuestions : hindiQuestions;
+    const filtered = currentQuestions.filter((question) =>
+      question.toLowerCase().includes(inputValue.toLowerCase())
+    ).slice(0, 6); // Show max 6 suggestions
 
     setFollowUpSuggestions(filtered);
     setShowSuggestions(filtered.length > 0);
     setSelectedSuggestionIndex(-1);
   }, [inputValue, language]);
 
-  // Keyboard navigation for suggestions
+  // Handle keyboard navigation for suggestions
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!showSuggestions || followUpSuggestions.length === 0) return;
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setSelectedSuggestionIndex((prev) =>
+      setSelectedSuggestionIndex(prev => 
         prev < followUpSuggestions.length - 1 ? prev + 1 : prev
       );
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setSelectedSuggestionIndex((prev) => (prev > -1 ? prev - 1 : -1));
+      setSelectedSuggestionIndex(prev => prev > -1 ? prev - 1 : -1);
     } else if (e.key === "Enter" && selectedSuggestionIndex >= 0) {
       e.preventDefault();
-      const selected = followUpSuggestions[selectedSuggestionIndex];
-      setInputValue(selected);
+      const selectedSuggestion = followUpSuggestions[selectedSuggestionIndex];
+      setInputValue(selectedSuggestion);
       setShowSuggestions(false);
-      handleSendMessage(selected);
+      handleSendMessage(selectedSuggestion);
     } else if (e.key === "Escape") {
       setShowSuggestions(false);
       setSelectedSuggestionIndex(-1);
     }
   };
 
+  // Handle suggestion click
   const handleSuggestionClick = (suggestion: string) => {
     setInputValue(suggestion);
     setShowSuggestions(false);
     handleSendMessage(suggestion);
   };
 
-  const predefinedQuestions = getCurrentQuestions().slice(0, 10);
-
-  // Server health + CORS check
+  // Close suggestions when clicking outside
   useEffect(() => {
-    const checkServerStatus = async () => {
-      const corsWorking = await testCORS();
-      if (!corsWorking) {
-        toast.error("CORS issue detected");
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node) &&
+        !inputRef.current?.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
       }
+    };
 
-      const isOnline = await checkHealth();
-      setIsServerOnline(isOnline);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-      if (!isOnline) {
-        toast.error("AI server offline. Check backend http://localhost:5001");
-      } else {
-        toast.success("✅ Connected to AI server", { duration: 2000 });
+  const predefinedQuestions = language === "en" ? englishQuestions.slice(0, 12) : hindiQuestions.slice(0, 12);
+
+  // Server health check with debouncing
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
+    const checkServerStatus = async () => {
+      try {
+        const isOnline = await Promise.race([
+          checkHealth(),
+          new Promise<boolean>((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout')), 5000)
+          )
+        ]);
+        setIsServerOnline(isOnline);
+        if (!isOnline) {
+          toast.error("AI server is currently offline. Please try again later.");
+        }
+      } catch (error) {
+        setIsServerOnline(false);
+        console.error("Health check failed:", error);
       }
     };
 
     checkServerStatus();
-    const interval = setInterval(checkServerStatus, 30000);
-    return () => clearInterval(interval);
+    const interval = setInterval(checkServerStatus, 45000); // Check every 45 seconds
+    return () => {
+      clearInterval(interval);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, []);
 
   const updateChipsScrollState = () => {
     const el = chipsRef.current;
     if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 0);
-    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+    setCanScrollLeft(el.scrollLeft > 5);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 5);
   };
 
   useEffect(() => {
@@ -213,22 +237,20 @@ const ChatSection = () => {
     const onResize = () => updateChipsScrollState();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-  }, []);
+  }, [predefinedQuestions]);
 
   const scrollChips = (dir: "left" | "right") => {
     const el = chipsRef.current;
     if (!el) return;
-    const amount = Math.floor(el.clientWidth * 0.9);
-    el.scrollBy({
-      left: dir === "left" ? -amount : amount,
-      behavior: "smooth",
-    });
+    const amount = Math.floor(el.clientWidth * 0.8);
+    el.scrollBy({ left: dir === "left" ? -amount : amount, behavior: "smooth" });
   };
 
   const handleSendMessage = async (messageText: string) => {
     if (!messageText.trim()) return;
+
     if (!isServerOnline) {
-      toast.error("Backend offline. Start FastAPI server.");
+      toast.error("AI server is currently offline. Please try again later.");
       return;
     }
 
@@ -237,16 +259,22 @@ const ChatSection = () => {
       text: messageText,
       isUser: true,
       timestamp: new Date(),
-      language: detectedInputLanguage,
     };
+
     setMessages((prev) => [...prev, userMessage]);
     setInputValue("");
     setShowSuggestions(false);
     setIsLoading(true);
-    requestAnimationFrame(scrollChatToBottom);
+    
+    // Immediate scroll without animation for better UX
+    setTimeout(() => scrollChatToBottom(), 50);
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
       const response = await sendMessage(messageText, language);
+      clearTimeout(timeoutId);
 
       if (response.success) {
         const aiMessage: Message = {
@@ -254,18 +282,18 @@ const ChatSection = () => {
           text: response.response,
           isUser: false,
           timestamp: new Date(),
-          language: response.detected_language,
         };
         setMessages((prev) => [...prev, aiMessage]);
-
-        if (response.detected_language === "hinglish") {
-          toast.success("🌐 Hinglish detected");
-        }
       } else {
-        toast.error("❌ Failed to get response");
+        toast.error("Failed to get response. Please try again.");
       }
     } catch (error) {
-      toast.error("❌ Error in sending message");
+      console.error("Error getting AI response:", error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        toast.error("Request timed out. Please try again.");
+      } else {
+        toast.error("Failed to get response. Please try again later.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -278,258 +306,233 @@ const ChatSection = () => {
     }
   };
 
-  const getPlaceholder = () => getSmartPlaceholder(language, inputValue);
-  const getLoadingText = () =>
-    language === "hi" ? "टाइप हो रहा है..." : "Typing...";
-  const getTryAskingText = () =>
-    language === "hi" ? "पूछने की कोशिश करो:" : "Try asking:";
-  const getHeaderSubtitle = () =>
-    language === "hi" ? "नव्याकोष के बारे में पूछें" : "Ask about Navyakosh";
-
-  const getInputLanguageIndicator = () => {
-    if (!inputValue.trim()) return null;
-    const indicators = {
-      en: "🇬🇧 English",
-      hi: "🇮🇳 Hindi",
-      hinglish: "🌐 Hinglish",
-    };
-    return indicators[detectedInputLanguage];
-  };
-
   return (
-    <section className="px-0 sm:px-6 pb-0 sm:pb-12 font-poppins h-screen sm:h-auto">
-      <div className="mx-0 sm:mx-auto w-full sm:max-w-5xl h-screen sm:h-auto">
+    <div className="fixed inset-0 bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-0 sm:p-4 font-poppins">
+      <div className="w-full h-full sm:w-[95vw] sm:h-[92vh] sm:max-w-7xl mx-auto">
         <div
-          className="bg-white flex flex-col h-screen sm:h-[80vh] rounded-none sm:rounded-3xl border-0 sm:border-2 shadow-xl overflow-hidden"
+          className="bg-white rounded-none sm:rounded-2xl shadow-none sm:shadow-2xl overflow-hidden flex flex-col h-full border-0 sm:border"
           style={{ borderColor: LCB_GREEN }}
         >
           {/* Header */}
           <div
-            className="p-4 sm:p-6 text-white border-b flex justify-between items-center"
+            className="px-4 py-3 sm:px-6 sm:py-4 text-white border-b flex justify-between items-center shrink-0"
             style={{ backgroundColor: LCB_GREEN, borderColor: LCB_GREEN_DARK }}
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-xl flex items-center justify-center shadow-md">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
                 <img
                   src="https://static.wixstatic.com/media/9f521c_3889887a159a4d15b348c18ed3a8b49c~mv2.jpeg/v1/crop/x_24,y_43,w_579,h_579/fill/w_80,h_80,al_c,q_80,usm_0.66_1.00_0.01,enc_avif,quality_auto/LCB%20Fertilizers.jpeg"
                   alt="LCB Logo"
-                  className="w-12 h-12 rounded-full object-cover"
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl object-cover"
                 />
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg sm:text-2xl font-montserrat font-bold">
-                    LCB ChatBot 🌱
-                  </h2>
-                  {isServerOnline ? (
-                    <CheckCircle size={16} className="text-green-300" />
-                  ) : (
-                    <AlertCircle
-                      size={16}
-                      className="text-red-300"
-                      title="Server Offline"
-                    />
-                  )}
-                </div>
-                <p className="text-xs sm:text-sm font-poppins">
-                  {getHeaderSubtitle()}
+                <h2 className="text-lg sm:text-2xl font-montserrat font-bold">
+                  LCB ChatBot 🌱
+                </h2>
+                <p className="text-xs sm:text-sm font-poppins opacity-90">
+                  {language === "en" ? "Ask about Navyakosh (English/Hinglish supported)" : "नव्याकोश के बारे में पूछें"}
                 </p>
               </div>
             </div>
 
-            {/* Toggle */}
-            <div className="flex items-center gap-1 text-xs sm:text-sm bg-white bg-opacity-20 rounded-full p-1">
+            {/* Language Toggle - Hindi and English */}
+            <div className="flex items-center gap-1 text-sm bg-white/20 rounded-lg p-1">
               <button
                 onClick={() => setLanguage("en")}
-                className={`px-3 sm:px-4 py-1.5 rounded-full transition-all ${
-                  language === "en"
-                    ? "bg-white text-green-700 font-bold shadow-sm"
-                    : "bg-transparent text-white hover:bg-white hover:bg-opacity-10"
+                className={`px-3 py-1.5 rounded-md transition-all font-medium ${
+                  language === "en" 
+                    ? "bg-white text-green-700 shadow-sm" 
+                    : "text-white hover:bg-white/20"
                 }`}
+                title="English (Hinglish auto-detected)"
               >
-                English
+                EN
               </button>
               <button
                 onClick={() => setLanguage("hi")}
-                className={`px-3 sm:px-4 py-1.5 rounded-full transition-all ${
-                  language === "hi"
-                    ? "bg-white text-green-700 font-bold shadow-sm"
-                    : "bg-transparent text-white hover:bg-white hover:bg-opacity-10"
+                className={`px-3 py-1.5 rounded-md transition-all font-medium ${
+                  language === "hi" 
+                    ? "bg-white text-green-700 shadow-sm" 
+                    : "text-white hover:bg-white/20"
                 }`}
+                title="Hindi"
               >
-                हिंदी
+                हिं
               </button>
             </div>
           </div>
 
-          {/* Messages */}
+          {/* Chat Messages */}
           <div
             ref={scrollContainerRef}
-            className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-white"
+            className="flex-1 overflow-y-auto px-4 py-3 sm:px-6 sm:py-4 space-y-3 sm:space-y-4 bg-gray-50/50"
+            style={{ scrollBehavior: "smooth" }}
           >
-            {messages.map((m) => (
-              <MessageBubble key={m.id} message={m} />
+            {messages.map((message) => (
+              <MessageBubble key={message.id} message={message} />
             ))}
             {isLoading && (
-              <div className="flex justify-start">
+              <div className="flex justify-start animate-fade-in">
                 <div
-                  className="rounded-2xl px-4 py-2 max-w-xs font-poppins"
-                  style={{
-                    backgroundColor: LCB_GREEN_SOFT,
-                    color: LCB_GREEN_DARK,
-                  }}
+                  className="rounded-2xl px-4 py-3 max-w-xs font-poppins text-sm flex items-center gap-2"
+                  style={{ backgroundColor: LCB_GREEN_SOFT, color: LCB_GREEN_DARK }}
                 >
-                  {getLoadingText()}
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-current rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 bg-current rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  </div>
+                  {language === "en" ? "Typing..." : "टाइप कर रहे हैं..."}
                 </div>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input + Chips */}
-          <div
-            className="p-4 sm:p-6 bg-white border-t relative"
-            style={{ borderColor: LCB_GREEN }}
-          >
+          {/* Input + Suggestions + Chips */}
+          <div className="px-4 py-3 sm:px-6 sm:py-4 bg-white border-t relative shrink-0" style={{ borderColor: LCB_GREEN }}>
+            {/* Follow-up Suggestions Dropdown */}
             {showSuggestions && followUpSuggestions.length > 0 && (
               <div
                 ref={suggestionsRef}
-                className="absolute bottom-full left-4 right-4 sm:left-6 sm:right-6 mb-2 bg-white border rounded-xl shadow-lg max-h-48 overflow-y-auto z-10"
+                className="absolute bottom-full left-4 right-4 sm:left-6 sm:right-6 mb-2 bg-white border rounded-xl shadow-xl max-h-64 overflow-y-auto z-20"
                 style={{ borderColor: LCB_GREEN }}
               >
-                {followUpSuggestions.map((s, i) => (
+                {followUpSuggestions.map((suggestion, index) => (
                   <button
-                    key={i}
-                    onClick={() => handleSuggestionClick(s)}
-                    className={`w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 font-poppins text-sm ${
-                      selectedSuggestionIndex === i ? "bg-gray-50" : ""
+                    key={index}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className={`w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 font-poppins text-sm transition-colors ${
+                      selectedSuggestionIndex === index ? 'bg-green-50' : ''
                     }`}
                     style={{
-                      color:
-                        selectedSuggestionIndex === i
-                          ? LCB_GREEN_DARK
-                          : "#374151",
+                      color: selectedSuggestionIndex === index ? LCB_GREEN_DARK : '#374151'
                     }}
                   >
-                    {s}
+                    {suggestion}
                   </button>
                 ))}
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-3 mb-4">
-              <div className="flex-1 relative">
-                <Input
-                  ref={inputRef}
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  onKeyDown={handleKeyDown}
-                  placeholder={getPlaceholder()}
-                  className="bg-white rounded-xl font-poppins pr-20"
-                  style={{ borderColor: LCB_GREEN, color: "#166534" }}
-                  disabled={isLoading || !isServerOnline}
-                />
-                {getInputLanguageIndicator() && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none">
-                    {getInputLanguageIndicator()}
-                  </div>
-                )}
-              </div>
+            <div className="flex gap-3 mb-4">
+              <Input
+                ref={inputRef}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyPress={handleKeyPress}
+                onKeyDown={handleKeyDown}
+                placeholder={
+                  language === "en" 
+                    ? "Type in English or Hinglish (e.g., 'aap kya bechte ho')..." 
+                    : "अपना प्रश्न हिंदी में टाइप करें..."
+                }
+                className="flex-1 bg-gray-50 rounded-xl font-poppins text-sm sm:text-base h-12 sm:h-14 px-4 focus:bg-white transition-colors"
+                style={{
+                  borderColor: LCB_GREEN,
+                  color: "#166534",
+                }}
+                disabled={isLoading || !isServerOnline}
+                autoComplete="off"
+                spellCheck="false"
+              />
               <Button
                 onClick={() => handleSendMessage(inputValue)}
                 disabled={isLoading || !inputValue.trim() || !isServerOnline}
-                className="rounded-xl px-4 sm:px-6 text-white font-montserrat"
+                className="rounded-xl px-4 sm:px-6 text-white font-montserrat h-12 sm:h-14 min-w-[48px] flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95"
                 style={{ backgroundColor: LCB_GREEN }}
+                onMouseEnter={(e) =>
+                  ((e.currentTarget as HTMLButtonElement).style.backgroundColor = LCB_GREEN_DARK)
+                }
+                onMouseLeave={(e) =>
+                  ((e.currentTarget as HTMLButtonElement).style.backgroundColor = LCB_GREEN)
+                }
               >
-                <ArrowRight size={18} />
+                <ArrowRight size={18} className="shrink-0" />
               </Button>
             </div>
 
-            <div className="space-y-2">
-              <p
-                className="text-xs sm:text-sm font-montserrat"
-                style={{ color: LCB_GREEN_DARK }}
-              >
-                {getTryAskingText()}
+            {/* Chips */}
+            <div className="space-y-3">
+              <p className="text-xs sm:text-sm font-montserrat font-medium" style={{ color: LCB_GREEN_DARK }}>
+                {language === "en" ? "Try asking:" : "पूछने की कोशिश करें:"}
               </p>
+
               <div className="relative">
-                {/* Left Arrow */}
                 <button
                   aria-label="Scroll left"
                   onClick={() => scrollChips("left")}
                   disabled={!canScrollLeft}
-                  className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 rounded-full p-2 shadow-md transition-all ${
-                    canScrollLeft
-                      ? "opacity-100 hover:scale-105"
-                      : "opacity-30 cursor-not-allowed"
+                  className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 rounded-full p-2.5 shadow-lg transition-all ${
+                    canScrollLeft 
+                      ? "opacity-100 hover:scale-110" 
+                      : "opacity-0 cursor-not-allowed"
                   } hidden sm:flex`}
-                  style={{
-                    backgroundColor: LCB_GREEN,
-                    color: "white",
-                    marginLeft: "-12px",
-                  }}
+                  style={{ backgroundColor: LCB_GREEN, color: "white" }}
                 >
-                  <ChevronLeft size={16} />
+                  <ChevronLeft size={18} />
                 </button>
 
                 <div
                   ref={chipsRef}
                   onScroll={updateChipsScrollState}
-                  className="flex gap-2 overflow-x-auto snap-x snap-mandatory items-stretch py-1 px-1 sm:px-10"
-                  style={{
-                    scrollbarWidth: "none",
-                    msOverflowStyle: "none",
-                  }}
+                  className="flex gap-2.5 overflow-x-auto snap-x snap-mandatory px-2 sm:px-10 pb-2 scrollbar-hide"
+                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
-                  {predefinedQuestions.map((q, i) => (
+                  {predefinedQuestions.map((question, index) => (
                     <button
-                      key={i}
-                      onClick={() => handleSendMessage(q)}
+                      key={index}
+                      onClick={() => handleSendMessage(question)}
                       disabled={isLoading || !isServerOnline}
-                      className="shrink-0 snap-start rounded-full text-xs sm:text-sm px-3 sm:px-4 py-2 border transition-all hover:shadow-md hover:scale-[1.02] active:scale-95"
+                      className="shrink-0 snap-start rounded-full text-xs sm:text-sm px-4 py-2.5 border-2 transition-all hover:shadow-lg hover:scale-105 hover:-translate-y-0.5 whitespace-nowrap font-medium active:scale-95"
                       style={{
                         borderColor: LCB_GREEN,
                         color: LCB_GREEN_DARK,
                         background: "white",
-                        whiteSpace: "nowrap",
                       }}
                     >
-                      {q}
+                      {question}
                     </button>
                   ))}
                 </div>
 
-                {/* Right Arrow */}
                 <button
                   aria-label="Scroll right"
                   onClick={() => scrollChips("right")}
                   disabled={!canScrollRight}
-                  className={`absolute right-0 top-1/2 -translate-y-1/2 z-20 rounded-full p-2 shadow-md transition-all ${
-                    canScrollRight
-                      ? "opacity-100 hover:scale-105"
-                      : "opacity-30 cursor-not-allowed"
+                  className={`absolute right-1 top-1/2 -translate-y-1/2 z-10 rounded-full p-2.5 shadow-lg transition-all ${
+                    canScrollRight 
+                      ? "opacity-100 hover:scale-110" 
+                      : "opacity-0 cursor-not-allowed"
                   } hidden sm:flex`}
-                  style={{
-                    backgroundColor: LCB_GREEN,
-                    color: "white",
-                    marginRight: "-12px",
-                  }}
+                  style={{ backgroundColor: LCB_GREEN, color: "white" }}
                 >
-                  <ChevronRight size={16} />
+                  <ChevronRight size={18} />
                 </button>
               </div>
             </div>
-
-            {detectedInputLanguage === "hinglish" && inputValue.trim() && (
-              <div className="mt-2 text-xs text-gray-600 bg-blue-50 px-3 py-1 rounded-lg border border-blue-200">
-                💡 Hinglish detected — response will be in Hinglish
-              </div>
-            )}
           </div>
         </div>
       </div>
-    </section>
+      
+      <style >{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.3s ease-out;
+        }
+      `}</style>
+    </div>
   );
 };
 
